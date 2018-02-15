@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -14,8 +15,8 @@
   "author": "First+Third",
   "license": "MIT",
   "bin": {
-    "shots": "./index.js",
-    "diff": "./diff.js"
+    "site-match": "./index.js",
+    "site-match-diff": "./diff.js"
   },
   "bugs": {
     "url": "https://github.com/firstandthird/site-match/issues"

@@ -1,0 +1,19 @@
+domain: https://leanin.org
+devices:
+  mobile:
+     width: 414
+     pixelRatio: 2
+  desktop:
+     width: 1200
+urls:
+   - url: '/'
+     css: >
+      *, *:before, *:after {
+        animation-duration: 0s !important;
+        transition-duration: 0s !important;
+      }
+      .section-tall-wrapper {
+        min-height: auto !important;
+      }
+   - url: '/about/'
+   - url: '/education'

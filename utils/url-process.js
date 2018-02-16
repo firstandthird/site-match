@@ -4,10 +4,13 @@ const kebabCase = require('lodash.kebabcase');
 const { URL } = require('url');
 const mkdirp = require('mkdirp');
 const util = require('util');
+const fs = require('fs');
 
 const config = require('dotenv-safe').load({
   allowEmptyValues: true
 }).parsed;
+
+const access = util.promisify(fs.access);
 
 const request = async function(browser, path, setting) {
   if (!setting) {
@@ -16,6 +19,12 @@ const request = async function(browser, path, setting) {
 
   try {
     const imagePath = `${path}/${setting.pathName}-${setting.device}.png`;
+    const imageExists = !await access(imagePath, fs.constants.R_OK);
+
+    if (imageExists) {
+      console.log(`Existent image for "${setting.url}" on ${setting.device}. Skipping.`);
+      return Promise.resolve();
+    }
 
     const page = await browser.newPage();
     await page.setViewport({

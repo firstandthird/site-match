@@ -14,32 +14,43 @@ const request = async function(browser, path, setting) {
     return;
   }
 
-  const page = await browser.newPage();
-  await page.setViewport({
-    width: setting.width,
-    height: 800
-  });
+  try {
+    const imagePath = `${path}/${setting.pathName}-${setting.device}.png`;
 
-  console.log(`[${setting.device}] going to: ${setting.url}`);
+    const page = await browser.newPage();
+    await page.setViewport({
+      width: setting.width,
+      height: 800,
+      deviceScaleFactor: setting.pixelRatio
+    });
 
-  await page.goto(setting.url, {
-    waitUntil: 'networkidle0'
-  });
+    console.log(`[${setting.device}] going to: ${setting.url}`);
 
-  if (setting.css) {
-    await page.addStyleTag({ content: setting.css });
+    await page.goto(setting.url, {
+      waitUntil: 'networkidle0'
+    });
+
+    if (setting.css) {
+      await page.addStyleTag({ content: setting.css });
+    }
+
+    await page.screenshot({
+      path: imagePath,
+      fullPage: true
+    });
+
+    return page.close();
+  } catch (e) {
+    console.log(`Error while parsing "${setting.url}"`, e);
+    return Promise.reject(e);
   }
-
-  await page.screenshot({
-    path: `${path}/${setting.pathName}-${setting.device}.png`,
-    fullPage: true
-  });
 };
 
 module.exports = async (settings) => {
   let browser;
 
   if (config.WS_ENDPOINT) {
+    console.log(`Connecting to browser websocket at "${config.WS_ENDPOINT}".`);
     browser = await puppeteer.connect({
       browserWSEndpoint: config.WS_ENDPOINT
     });
@@ -58,12 +69,12 @@ module.exports = async (settings) => {
     settings.urls.forEach(object => {
       const finalUrl = new URL(object.url, settings.domain).toString();
       const name = object.url === '/' ? 'home' : kebabCase(object.url.toLowerCase());
-
-      urls.push(Object.assign({}, object, {
+      const url = Object.assign({}, object, {
         url: finalUrl,
         pathName: name,
         device,
-      }, settings.devices[device]));
+      }, settings.devices[device]);
+
       if (settings.css) {
         url.css = url.css ? url.css + settings.css : settings.css;
       }
@@ -74,6 +85,10 @@ module.exports = async (settings) => {
 
   const promises = urls.map(u => limit(() => request(browser, dir, u)));
 
-  await Promise.all(promises);
-  await browser.close();
+  try {
+    await Promise.all(promises);
+    await browser.close();
+  } catch (e) {
+    console.log(e);
+  }
 };

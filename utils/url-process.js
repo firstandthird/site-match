@@ -64,6 +64,11 @@ module.exports = async (settings) => {
         pathName: name,
         device,
       }, settings.devices[device]));
+      if (settings.css) {
+        url.css = url.css ? url.css + settings.css : settings.css;
+      }
+
+      urls.push(url);
     });
   });
 

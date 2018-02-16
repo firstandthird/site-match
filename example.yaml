@@ -5,13 +5,14 @@ devices:
      pixelRatio: 2
   desktop:
      width: 1200
+css: >
+  *, *:before, *:after {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
 urls:
    - url: '/'
      css: >
-      *, *:before, *:after {
-        animation-duration: 0s !important;
-        transition-duration: 0s !important;
-      }
       .section-tall-wrapper {
         min-height: auto !important;
       }

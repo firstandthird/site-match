@@ -7,6 +7,7 @@ const readFile = util.promisify(fs.readFile);
 
 const schema = Joi.object().keys({
   domain: Joi.string().uri().required(),
+  css: Joi.string().optional(),
   devices: Joi.object().pattern(/\w/, Joi.object().keys({
     width: Joi.number(),
     pixelRatio: Joi.number().optional().default(1)

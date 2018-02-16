@@ -19,7 +19,13 @@ const request = async function(browser, path, setting) {
 
   try {
     const imagePath = `${path}/${setting.pathName}-${setting.device}.png`;
-    const imageExists = !await access(imagePath, fs.constants.R_OK);
+    let imageExists = true;
+
+    try {
+      imageExists = !await access(imagePath);
+    } catch (e) {
+      imageExists = false;
+    }
 
     if (imageExists) {
       console.log(`Existent image for "${setting.url}" on ${setting.device}. Skipping.`);

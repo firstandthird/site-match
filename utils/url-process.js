@@ -5,6 +5,7 @@ const { URL } = require('url');
 const mkdirp = require('mkdirp');
 const util = require('util');
 const fs = require('fs');
+const chalk = require('chalk');
 
 const config = require('dotenv-safe').load({
   allowEmptyValues: true
@@ -28,7 +29,7 @@ const request = async function(browser, path, setting) {
     }
 
     if (imageExists) {
-      console.log(`Existent image for "${setting.url}" on ${setting.device}. Skipping.`);
+      console.log(`Existent image for "${setting.url}" on ${setting.device}. ${chalk.yellow('Skipping')}.`);
       return Promise.resolve();
     }
 
@@ -57,7 +58,8 @@ const request = async function(browser, path, setting) {
     return page.close();
   } catch (e) {
     console.log(`Error while parsing "${setting.url}"`, e);
-    return Promise.reject(e);
+    // Resolving so we move on
+    return Promise.resolve(e);
   }
 };
 
@@ -83,7 +85,14 @@ module.exports = async (settings) => {
   Object.keys(settings.devices).forEach(device => {
     settings.urls.forEach(object => {
       const finalUrl = new URL(object.url, settings.domain).toString();
-      const name = object.url === '/' ? 'home' : kebabCase(object.url.toLowerCase());
+      let name = '';
+
+      if (object.name) {
+        name = object.name;
+      } else {
+        name = object.url === '/' ? 'home' : kebabCase(object.url.toLowerCase());
+      }
+
       const url = Object.assign({}, object, {
         url: finalUrl,
         pathName: name,

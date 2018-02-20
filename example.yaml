@@ -10,8 +10,19 @@ css: >
     animation-duration: 0s !important;
     transition-duration: 0s !important;
   }
+sitemap:
+  path: '/sitemap.json'
+  ignore:
+    - 'parents.pdf'
 urls:
    - url: '/'
+   - url: '/'
+     name: 'bounce'
+     css: >
+      .bounce-modal {
+        display: block;
+      }
+   - url: '/mentor-her/'
      css: >
       .section-tall-wrapper {
         min-height: auto !important;

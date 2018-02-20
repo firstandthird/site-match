@@ -49,7 +49,9 @@ const getDomainFromDir = dir => path.parse(dir).base;
 
     dir1Files.forEach(file => {
       const fileName = path.basename(file, '.png');
-      const [pageName, size] = fileName.split('-');
+      const aux = fileName.split('-');
+      const size = aux.pop();
+      const pageName = aux.join('-');
       const matchingFile = path.join(dir2, path.basename(file));
 
       if (dir2Files.indexOf(matchingFile) < 0) {

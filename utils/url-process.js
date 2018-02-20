@@ -7,30 +7,25 @@ const util = require('util');
 const fs = require('fs');
 const chalk = require('chalk');
 
-const config = require('dotenv-safe').load({
-  allowEmptyValues: true
-}).parsed;
-
 const access = util.promisify(fs.access);
 
-const request = async function(browser, path, setting) {
+const request = async function(browser, setting) {
   if (!setting) {
     return;
   }
 
   try {
-    const imagePath = `${path}/${setting.pathName}-${setting.device}.png`;
     let imageExists = true;
 
     try {
-      imageExists = !await access(imagePath);
+      imageExists = !await access(setting.imagePath);
     } catch (e) {
       imageExists = false;
     }
 
     if (imageExists) {
       console.log(`Existent image for "${setting.url}" on ${setting.device}. ${chalk.yellow('Skipping')}.`);
-      return Promise.resolve();
+      return Promise.resolve(setting.imagePath);
     }
 
     const page = await browser.newPage();
@@ -51,31 +46,32 @@ const request = async function(browser, path, setting) {
     }
 
     await page.screenshot({
-      path: imagePath,
+      path: setting.imagePath,
       fullPage: true
     });
 
-    return page.close();
+    await page.close();
+    return Promise.resolve(setting.imagePath);
   } catch (e) {
     console.log(`Error while parsing "${setting.url}"`, e);
     // Resolving so we move on
-    return Promise.resolve(e);
+    return Promise.resolve(null);
   }
 };
 
-module.exports = async (settings) => {
+module.exports = async (settings, options) => {
   let browser;
 
-  if (config.WS_ENDPOINT) {
-    console.log(`Connecting to browser websocket at "${config.WS_ENDPOINT}".`);
+  if (options.wsEndpoint) {
+    console.log(`Connecting to browser websocket at "${options.wsEndpoint}".`);
     browser = await puppeteer.connect({
-      browserWSEndpoint: config.WS_ENDPOINT
+      browserWSEndpoint: options.wsEndpoint
     });
   } else {
     browser = await puppeteer.launch();
   }
 
-  const limit = pLimit(10);
+  const limit = pLimit(options.concurrent);
   const urls = [];
   const domainURL = new URL(settings.domain);
   const dir = `./out/${domainURL.hostname}`;
@@ -95,7 +91,8 @@ module.exports = async (settings) => {
 
       const url = Object.assign({}, object, {
         url: finalUrl,
-        pathName: name,
+        imagePath: `${dir}/${name}-${device}.png`,
+        name,
         device,
       }, settings.devices[device]);
 
@@ -107,11 +104,26 @@ module.exports = async (settings) => {
     });
   });
 
-  const promises = urls.map(u => limit(() => request(browser, dir, u)));
+  const list = {};
+
+  urls.forEach(url => {
+    if (!list[url.name]) {
+      list[url.name] = {};
+    }
+
+    list[url.name][url.device] = url.imagePath;
+  });
+
+  const promises = urls.map(u => limit(() => request(browser, u)));
 
   try {
     await Promise.all(promises);
     await browser.close();
+
+    return Promise.resolve({
+      path: dir,
+      list
+    });
   } catch (e) {
     console.log(e);
   }

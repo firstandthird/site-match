@@ -24,7 +24,7 @@
   "homepage": "https://github.com/firstandthird/site-match#readme",
   "dependencies": {
     "chalk": "^2.3.1",
-    "dotenv-safe": "^4.0.4",
+    "dotenv": "^5.0.0",
     "joi": "^13.1.2",
     "js-yaml": "^3.10.0",
     "lodash.kebabcase": "^4.1.1",
@@ -33,6 +33,7 @@
     "p-limit": "^1.2.0",
     "pixelmatch": "^4.0.2",
     "pngjs": "^3.3.1",
-    "puppeteer": "^1.0.0"
+    "puppeteer": "^1.0.0",
+    "yargs": "^11.0.0"
   }
 }

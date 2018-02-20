@@ -6,22 +6,34 @@ const util = require('util');
 const path = require('path');
 const dirParser = require('./utils/dir-parser');
 const compareFiles = require('./utils/compare-files');
+const htmlGenerator = require('./utils/html-generator');
 
 const mkdir = util.promisify(mkdirp);
 const writeFile = util.promisify(fs.writeFile);
-const args = process.argv.slice(2);
-const dir1 = args[0];
-const dir2 = args[1];
 
-if (!dir1) {
-  console.log('Directory to compare with is missing');
-  process.exit(1);
-}
+require('dotenv').config();
 
-if (!dir2) {
-  console.log('Directory to compare against is missing');
-  process.exit(1);
-}
+const argv = require('yargs')
+  .usage('$0 <dir1> <dir2> [options]', 'Compares screenshots from first directory with second directory', yargs => {
+    yargs.positional('dir1', {
+      describe: 'Directory to compare with',
+    }).positional('dir2', {
+      describe: 'Directory to compare against'
+    })
+  })
+  .env(true)
+  .option('concurrent', {
+    alias: 'c',
+    describe: 'Concurrent comparisons',
+    default: 10,
+    type: 'number'
+  })
+  .help('h')
+  .alias('h', 'help')
+  .argv;
+
+const dir1 = argv.dir1;
+const dir2 = argv.dir2;
 
 const getDomainFromDir = dir => path.parse(dir).base;
 
@@ -29,7 +41,7 @@ const getDomainFromDir = dir => path.parse(dir).base;
   try {
     const dir1Files = await dirParser(dir1);
     const dir2Files = await dirParser(dir2);
-    const limit = pLimit(10);
+    const limit = pLimit(argv.concurrent);
     const promises = [];
     const target = `out/${getDomainFromDir(dir1)}-${getDomainFromDir(dir2)}`;
     const diff = {};
@@ -58,7 +70,17 @@ const getDomainFromDir = dir => path.parse(dir).base;
     });
 
     await Promise.all(promises);
-    await writeFile(path.join(target, 'diff.json'), JSON.stringify(diff, null, '\t'));
+    const htmlPath = path.join(target, 'diff.html');
+    const jsonPath = path.join(target, 'diff.json');
+
+    // Get them in tandem
+    await Promise.all([
+      writeFile(jsonPath, JSON.stringify(diff, null, '\t')),
+      htmlGenerator.diff(htmlPath, diff)
+    ]);
+
+    console.log(`Generated JSON diff at "${jsonPath}".`);
+    console.log(`Generated HTML document at "${htmlPath}".`);
   } catch (e) {
     console.log(e);
     process.exit(1);

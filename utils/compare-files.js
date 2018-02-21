@@ -34,11 +34,6 @@ module.exports = async (file1, file2, output, json) => {
   const totalPixels = img1.width * img1.height;
   const percent = ((score * 100) / totalPixels);
 
-  json.diff = {
-    percent: `${percent.toFixed(2)}%`,
-    output: comparePath
-  };
-
   let color = 'green';
 
   if (percent >= 10 && percent < 40) {
@@ -46,6 +41,12 @@ module.exports = async (file1, file2, output, json) => {
   } else if (percent >= 40) {
     color = 'red';
   }
+
+  json.diff = {
+    percent: `${percent.toFixed(2)}%`,
+    color,
+    output: comparePath
+  };
 
   console.log(`"${file1}" vs "${file2}": ${chalk[color](json.diff.percent)}`);
   return saveDiff(diff, comparePath);

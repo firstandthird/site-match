@@ -11,7 +11,7 @@ const access = util.promisify(fs.access);
 
 const request = async function(browser, setting) {
   if (!setting) {
-    return;
+    return Promise.resolve();
   }
 
   try {
